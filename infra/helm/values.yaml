@@ -1,0 +1,20 @@
+# Default values for regiq.
+
+replicaCount: 1
+
+image:
+  api:
+    repository: regiq/api
+    pullPolicy: IfNotPresent
+    tag: "latest"
+  web:
+    repository: regiq/web
+    pullPolicy: IfNotPresent
+    tag: "latest"
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
