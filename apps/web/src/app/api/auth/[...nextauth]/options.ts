@@ -1,7 +1,17 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
+/** Server-side API base (Docker: api:8000). Browser uses NEXT_PUBLIC_API_URL via rewrites. */
+function getAuthApiBaseUrl(): string {
+  return (
+    process.env.API_INTERNAL_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    "http://localhost:8000"
+  ).replace(/\/$/, "");
+}
+
 export const authOptions: NextAuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET || "dev-nextauth-secret-change-me-in-production-32chars",
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -12,7 +22,7 @@ export const authOptions: NextAuthOptions = {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
       async authorize(credentials, _req) {
         try {          if (!credentials?.username || !credentials?.password) return null;
-                    const res = await fetch(process.env.NEXT_PUBLIC_API_URL + "/api/v1/auth/login", {
+                    const res = await fetch(`${getAuthApiBaseUrl()}/api/v1/auth/login`, {
             method: 'POST',
             body: new URLSearchParams({
               username: credentials.username,
