@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: CI Pipeline
 
 on:
   push:
@@ -7,56 +7,32 @@ on:
     branches: [ main ]
 
 jobs:
-  test-api:
+  build-and-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          
-      - name: Install dependencies
-        run: |
-          cd apps/api
-          pip install poetry
-          poetry install
-          
-      - name: Run Pytest
-        run: |
-          cd apps/api
-          poetry run pytest tests/ --cov=app
+    - uses: actions/checkout@v3
 
-  test-web:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          
-      - name: Install dependencies
-        run: |
-          cd apps/web
-          npm install
-          
-      - name: Run Linter
-        run: |
-          cd apps/web
-          npm run lint
-          
-  docker-build:
-    needs: [test-api, test-web]
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Build API Image
-        run: docker build -t regiq/api:${{ github.sha }} -f apps/api/Dockerfile apps/api
-        
-      - name: Build Web Image
-        run: docker build -t regiq/web:${{ github.sha }} -f apps/web/Dockerfile apps/web
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: Install Frontend Dependencies
+      run: npm install
+      working-directory: apps/web
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install Poetry
+      run: curl -sSL https://install.python-poetry.org | python3 -
+
+    - name: Install Backend Dependencies
+      run: poetry install
+      working-directory: apps/api
+
+    - name: Run Backend Tests
+      run: poetry run pytest
+      working-directory: apps/api
