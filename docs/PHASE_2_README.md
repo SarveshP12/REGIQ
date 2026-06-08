@@ -12,12 +12,13 @@ Phase 2 introduces **AI intelligence** to the platform. Every test case gets aut
 
 ### Exit Criteria
 
-| Criteria | Target |
-|----------|--------|
-| AI classification accuracy | > 88% |
-| Dependency graph | Operational for at least 1 ServiceNow module |
-| Criticality scoring | All imported test cases scored |
-| Defect ingestion | Working from at least 1 source (Jira/ADO/ServiceNow) |
+| Criteria | Target | Status |
+|----------|--------|--------|
+| TCC training dataset | ≥ 2,000 labeled examples, 70/15/15 split, ITSM vocabulary | **Done** — `apps/api/data/datasets/tcc_v1/` |
+| AI classification accuracy | > 88% | **Open** — rule-based fallback only |
+| Dependency graph | Operational for ≥1 ServiceNow module | **Done** — Incident Management demo |
+| Criticality scoring | All imported test cases scored | **Partial** — on create/import only |
+| Defect ingestion | Working from ≥1 source | **Partial** — connectors + mock fallback |
 
 ---
 
@@ -85,24 +86,34 @@ apps/api (FastAPI/Python) ──► POST /classify ──► AI Classification S
 
 ### Training Data Preparation
 
-- [ ] Curate labeled dataset from existing test cases (minimum 2,000 labeled examples)
-- [ ] Build ITSM-specific vocabulary (ServiceNow terms, module names, table names)
-- [ ] Create train/validation/test split (70/15/15)
-- [ ] Define label hierarchy and mapping
+- [x] Curate labeled dataset from existing test cases (minimum 2,000 labeled examples)
+- [x] Build ITSM-specific vocabulary (ServiceNow terms, module names, table names)
+- [x] Create train/validation/test split (70/15/15)
+- [x] Define label hierarchy and mapping
+
+Source: `docs/sample_data/Combined_500_ITSM_Test_Cases.csv` → run:
+
+```bash
+cd apps/api
+python scripts/prepare_training_dataset.py
+```
+
+Outputs: `apps/api/data/datasets/tcc_v1/` (`train.jsonl`, `validation.jsonl`, `test.jsonl`, `itsm_vocabulary.json`, `label_hierarchy.json`).
 
 ### Deliverables
 
-- [ ] Set up Python AI services directory (`services/ai-service/`)
-- [ ] Build NLP text preprocessing pipeline (BeautifulSoup + SpaCy)
-- [ ] Train custom SpaCy NER model for ServiceNow entities
-- [ ] Fine-tune BERT for multi-label business process classification
-- [ ] Build FastAPI classification service with `/classify` endpoint
-- [ ] Implement batch classification endpoint
-- [ ] Create classification feedback API (accept/reject/correct)
-- [ ] Integrate classification service with FastAPI core backend
-- [ ] Auto-classify on test case creation and import
-- [ ] Build classification review queue UI for low-confidence results
-- [ ] Implement classification override workflow (human-in-loop)
+- [x] Set up Python AI module (`apps/api/app/core/ai/` — monorepo layout, not separate `services/ai-service/`)
+- [x] Build NLP text preprocessing pipeline (BeautifulSoup + SpaCy + regex ServiceNow entities)
+- [ ] Train custom SpaCy NER model for ServiceNow entities *(regex/heuristics only today)*
+- [ ] Fine-tune BERT for multi-label classification *(rule-based `rule-based-v1` fallback; `train_classifier.py` is mock)*
+- [x] Build FastAPI classification service with `/classify` endpoint
+- [x] Implement batch classification endpoint (`POST /api/v1/ai/classify/batch`)
+- [x] Create classification feedback API (`POST /api/v1/ai/classify/feedback`)
+- [x] Integrate classification service with FastAPI core backend
+- [x] Auto-classify on test case creation and import
+- [x] Build classification review queue UI (`/dashboard/classification`, `GET /classify/review-queue`)
+- [x] Implement classification override workflow (human-in-loop via feedback API + UI)
+- [ ] `GET /api/v1/ai/classify/stats` and `PUT /api/v1/tests/{id}/classify` *(not implemented)*
 
 ---
 
@@ -134,12 +145,12 @@ A weighted composite scoring model that assigns criticality to every test case.
 
 ### Implementation
 
-- [ ] Build rule engine for factor extraction (revenue impact, SLA sensitivity, etc.)
+- [x] Build rule engine for factor extraction (revenue impact, SLA sensitivity, etc.)
 - [ ] Train gradient boosted scoring model using historical execution and defect data
-- [ ] Build scoring API endpoint
-- [ ] Auto-score on test case creation and classification
-- [ ] Build criticality dashboard with distribution charts
-- [ ] Allow manual criticality override with audit logging
+- [x] Build scoring API endpoint (`/api/v1/criticality/{id}/recalculate`, `/override`)
+- [x] Auto-score on test case creation and classification
+- [ ] Build criticality dashboard with distribution charts *(no dedicated dashboard yet)*
+- [x] Allow manual criticality override with audit logging
 
 ---
 
@@ -189,10 +200,11 @@ ServiceNow Metadata Sync ──► Graph Builder Service ──► Neo4j
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
+| GET | `/api/v1/dependencies/health` | Neo4j connectivity and node/edge counts |
 | GET | `/api/v1/dependencies/graph` | Retrieve graph nodes/edges for visualization |
 | GET | `/api/v1/dependencies/component/{id}` | Get all dependencies for a component |
 | GET | `/api/v1/dependencies/test/{id}` | Get dependency chain for a test case |
-| POST | `/api/v1/dependencies/rebuild` | Trigger full graph rebuild |
+| POST | `/api/v1/dependencies/rebuild` | Trigger full graph rebuild (Incident Management demo) |
 
 ### Frontend: Dependency Graph Explorer
 
@@ -205,15 +217,27 @@ ServiceNow Metadata Sync ──► Graph Builder Service ──► Neo4j
 
 ### Deliverables
 
-- [ ] Set up Neo4j database (Docker container for dev)
-- [ ] Build graph schema with all node labels and relationship types
-- [ ] Create graph builder service that processes ServiceNow metadata into nodes/edges
-- [ ] Build graph query service (Python + Neo4j Driver)
-- [ ] Link test cases to components via `TESTS`/`COVERS` relationships
-- [ ] Build dependency graph REST API
-- [ ] Build React-Flow based Dependency Graph Explorer UI
-- [ ] Implement graph refresh on ServiceNow sync events
-- [ ] Verify graph operational for at least 1 complete ServiceNow module
+- [x] Set up Neo4j database (Docker container for dev)
+- [x] Build graph schema (8 node labels, PRD-aligned relationship types in demo graph)
+- [x] Create graph builder service that processes ServiceNow metadata into nodes/edges
+- [x] Build graph query service (Python + Neo4j Driver)
+- [x] Link test cases to components via `TESTS`/`COVERS`/`VALIDATES` relationships
+- [x] Build dependency graph REST API (`/api/v1/dependencies/*`)
+- [x] Build React-Flow Dependency Graph Explorer UI (`/dashboard/dependencies`) *(zoom/pan, rebuild; filters/export not yet)*
+- [x] Implement graph refresh on ServiceNow sync events (worker + webhook)
+- [x] Verify graph operational for Incident Management demo module (`POST /dependencies/rebuild`)
+
+### Verify locally
+
+```bash
+docker compose up -d neo4j api
+curl http://localhost:8000/api/v1/dependencies/health
+# After login, POST rebuild with Bearer token:
+curl -X POST http://localhost:8000/api/v1/dependencies/rebuild -H "Authorization: Bearer <token>"
+curl http://localhost:8000/api/v1/dependencies/graph -H "Authorization: Bearer <token>"
+```
+
+Open **Dashboard → Dependency Graph** (`/dashboard/dependencies`) in the web app.
 
 ---
 
@@ -258,13 +282,13 @@ Automated ingestion of historical defect data from external systems. Full analyt
 
 ### Deliverables
 
-- [ ] Build Jira REST API connector for defect ingestion
-- [ ] Build Azure DevOps connector for defect ingestion
-- [ ] Build ServiceNow incident/problem import
-- [ ] Create normalized defect schema and storage
-- [ ] Build defect import scheduling (periodic sync)
-- [ ] Link defects to components and test cases
-- [ ] Build defect browsing UI with filtering
+- [x] Build Jira REST API connector for defect ingestion (`jira_client.py` — mock fallback when unconfigured)
+- [x] Build Azure DevOps connector for defect ingestion (`ado_client.py` — mock fallback)
+- [x] Build ServiceNow incident/problem import (`servicenow_defect_client.py` — mock fallback)
+- [x] Create normalized defect schema and storage (`models/defect.py`, `GET/POST /api/v1/defects`)
+- [x] Build defect import scheduling (Celery `defect_sync_task` in `worker.py`)
+- [x] Link defects to components and test cases (`POST /api/v1/defects/link`)
+- [x] Build defect browsing UI (`/dashboard/defects` — basic list/import; filters need polish)
 
 ---
 
@@ -281,10 +305,10 @@ Automated ingestion of historical defect data from external systems. Full analyt
 
 ### Deliverables
 
-- [ ] Build Regression Coverage dashboard (D3.js coverage heatmap)
-- [ ] Build basic Defect Intelligence dashboard
-- [ ] Build AI Classification status panel
-- [ ] Upgrade Test Repository Health dashboard with classification stats
+- [ ] Build Regression Coverage dashboard (D3.js coverage heatmap) *(analytics page uses mock data)*
+- [ ] Build basic Defect Intelligence dashboard *(mock panel in analytics; API stats exist)*
+- [x] Build AI Classification status panel (`/dashboard/classification` — review queue + overrides)
+- [ ] Upgrade Test Repository Health dashboard with classification stats *(main dashboard still Phase 1 mock)*
 
 ---
 
@@ -306,12 +330,12 @@ Set up the semantic embedding infrastructure that will be essential for Phase 3'
 ### Deliverables
 
 - [ ] Fine-tune SBERT on ITSM test case pairs
-- [ ] Build embedding generation service (batch + online)
-- [ ] Set up pgvector extension in PostgreSQL (or Pinecone account)
-- [ ] Generate embeddings for all existing test cases
-- [ ] Auto-generate embedding on test case creation/update
-- [ ] Build similarity search endpoint (`/api/v1/tests/similar/{id}`)
-- [ ] Implement NLP-based duplicate detection using embeddings (upgrade from Phase 1)
+- [x] Build embedding generation service (batch + online — `embedding.py`, `all-mpnet-base-v2`)
+- [x] Set up pgvector extension in PostgreSQL (`pgvector/pgvector:pg15` image; column on model)
+- [ ] Generate embeddings for all existing test cases *(on create/update/import only; no backfill job)*
+- [x] Auto-generate embedding on test case creation/update
+- [x] Build similarity search endpoint (`GET /api/v1/tests/{id}/similar`)
+- [x] Implement NLP-based duplicate detection using embeddings (`duplicate` endpoint with cosine ≥ 0.85)
 
 ---
 
@@ -331,10 +355,10 @@ Set up the ML operations infrastructure for model versioning, training pipelines
 
 ### Deliverables
 
-- [ ] Set up MLflow for model versioning
-- [ ] Build model training scripts for TCC (BERT classifier)
+- [x] Set up MLflow for model versioning (Docker service on port 5050)
+- [x] Build model training scripts for TCC (`scripts/train_classifier.py` — loads JSONL; training loop is mock)
 - [ ] Build model evaluation pipeline (holdout test set)
-- [ ] Implement weekly batch retraining trigger
+- [x] Implement weekly batch retraining trigger (Celery beat → `train_classifier.py`)
 - [ ] Set up model performance monitoring (accuracy tracking over time)
 - [ ] Create model card documentation for TCC model
 
@@ -356,16 +380,21 @@ Set up the ML operations infrastructure for model versioning, training pipelines
 
 ## ✅ Phase 2 Completion Checklist
 
-- [ ] AI classification accuracy > 88% on holdout test set
-- [ ] All test cases classified across 6 dimensions
-- [ ] Criticality scores computed for all test cases
-- [ ] Neo4j dependency graph operational for at least 1 module
-- [ ] Defect ingestion working from at least 1 external source
-- [ ] Embedding service generating vectors for all test cases
-- [ ] Dependency Graph Explorer UI functional
-- [ ] MLflow model registry tracking TCC model versions
-- [ ] Classification review queue UI for low-confidence items
-- [ ] Updated dashboards with AI-powered insights
+| Status | Item |
+|--------|------|
+| [x] | TCC training data prepared (3,035 examples, 70/15/15 split, vocabulary, hierarchy) |
+| [ ] | AI classification accuracy **> 88%** on holdout test set *(no real BERT eval yet)* |
+| [~] | All test cases classified across 6 dimensions *(auto on create/import; rule-based; no bulk backfill)* |
+| [~] | Criticality scores computed for all test cases *(auto on create/import; heuristic scorer)* |
+| [x] | Neo4j dependency graph operational for ≥1 module (Incident Management demo) |
+| [x] | Defect ingestion from ≥1 source *(Jira/ADO/ServiceNow connectors + mock fallback)* |
+| [~] | Embedding service for all test cases *(per-record generation; no full backfill)* |
+| [x] | Dependency Graph Explorer UI functional (`/dashboard/dependencies`) |
+| [~] | MLflow model registry tracking TCC versions *(container up; mock training runs only)* |
+| [x] | Classification review queue UI for low-confidence items |
+| [ ] | Updated dashboards with AI-powered insights *(analytics still mock)* |
+
+**Phase 2 progress:** foundation and dev-ready scaffolding are largely in place; production ML (BERT fine-tune, >88% accuracy, eval pipeline, model cards) and enhanced dashboards remain open.
 
 ---
 

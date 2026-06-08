@@ -53,15 +53,15 @@ regiq/
 
 ### Deliverables
 
-- [ ] Initialize repository with monorepo setup (or separate directories for web/api)
-- [ ] Scaffold Next.js 14 app with App Router in `apps/web`
-- [ ] Scaffold FastAPI + Python API in `apps/api` with Poetry
-- [ ] Create shared database schema configurations using SQLAlchemy models
-- [ ] Set up Ruff for Python linting/formatting and ESLint/Prettier for Next.js
-- [ ] Create base Dockerfiles for each service
-- [ ] Create `docker-compose.yml` with PostgreSQL, Redis, MongoDB, and app services
-- [ ] Set up environment variable management (`.env.example` files)
-- [ ] Add basic health check endpoints (`GET /health`)
+- [x] Initialize repository with monorepo setup (or separate directories for web/api)
+- [x] Scaffold Next.js 14 app with App Router in `apps/web`
+- [x] Scaffold FastAPI + Python API in `apps/api` with Poetry
+- [x] Create shared database schema configurations using SQLAlchemy models
+- [x] Set up Ruff for Python linting/formatting and ESLint/Prettier for Next.js
+- [x] Create base Dockerfiles for each service
+- [x] Create `docker-compose.yml` with PostgreSQL, Redis, MongoDB, and app services
+- [x] Set up environment variable management (`.env.example` files)
+- [x] Add basic health check endpoints (`GET /health`)
 
 ---
 
@@ -111,25 +111,25 @@ regiq/
 
 ### Security Checklist
 
-- [ ] TLS 1.3 minimum for all communications
-- [ ] AES-256 encryption for credentials and API keys at rest
-- [ ] Zero plaintext secrets in code (use env vars / secrets manager)
-- [ ] All user actions logged to audit_logs table
-- [ ] Rate limiting per tenant and per user (HTTP 429)
-- [ ] Middleware-enforced permission checks on every endpoint
-- [ ] Row-level security for multi-tenant data isolation
+- [x] TLS 1.3 minimum for all communications
+- [x] AES-256 encryption for credentials and API keys at rest
+- [x] Zero plaintext secrets in code (use env vars / secrets manager)
+- [x] All user actions logged to audit_logs table
+- [x] Rate limiting per tenant and per user (HTTP 429)
+- [x] Middleware-enforced permission checks on every endpoint
+- [x] Row-level security for multi-tenant data isolation
 
 ### Deliverables
 
-- [ ] Implement NextAuth.js on the frontend and Python-based JWT verification middleware on the backend
-- [ ] Build JWT issuance and validation handlers in Python (using PyJWT / Passlib)
-- [ ] Create RBAC middleware/dependency injection rules with role-permission mapping in FastAPI
-- [ ] Build user management CRUD APIs in Python
-- [ ] Implement API key generation and HMAC-SHA256 validation
-- [ ] Build audit logging decorators/middleware (auto-log all mutations to DB)
-- [ ] Set up rate limiting with Redis (using fastapi-limiter)
-- [ ] Create login/registration UI pages
-- [ ] Build user management admin panel
+- [x] Implement NextAuth.js on the frontend and Python-based JWT verification middleware on the backend
+- [x] Build JWT issuance and validation handlers in Python (using PyJWT / Passlib)
+- [x] Create RBAC middleware/dependency injection rules with role-permission mapping in FastAPI
+- [x] Build user management CRUD APIs in Python
+- [x] Implement API key generation and HMAC-SHA256 validation
+- [x] Build audit logging decorators/middleware (auto-log all mutations to DB)
+- [x] Set up rate limiting with Redis (using fastapi-limiter)
+- [x] Create login/registration UI pages
+- [x] Build user management admin panel
 
 ---
 
@@ -158,12 +158,12 @@ regiq/
 
 ### Deliverables
 
-- [ ] Set up migration tool (Alembic)
-- [ ] Create all core table migrations with proper types and constraints (SQLAlchemy models)
-- [ ] Add indexes on tenant_id, status, created_at, business_process_id
-- [ ] Set up seed data scripts for development
-- [ ] Implement connection pooling (SQLAlchemy engine configuration)
-- [ ] Configure row-level security policies for multi-tenancy in PostgreSQL
+- [x] Set up migration tool (Alembic)
+- [x] Create all core table migrations with proper types and constraints (SQLAlchemy models)
+- [x] Add indexes on tenant_id, status, created_at, business_process_id
+- [x] Set up seed data scripts for development
+- [x] Implement connection pooling (SQLAlchemy engine configuration)
+- [x] Configure row-level security policies for multi-tenancy in PostgreSQL
 
 ---
 
@@ -213,23 +213,23 @@ Draft → Review → Approved → Active → Deprecated → Archived
 
 ### Frontend Pages
 
-- [ ] **Test Repository Browser** — DataGrid with faceted filters, multi-tag sidebar, quick preview panel, bulk action toolbar
-- [ ] **Test Case Detail View** — Full test case with steps, metadata, version history, related items
-- [ ] **Test Case Editor** — Form with structured fields, step editor, tag selector, Gherkin toggle
-- [ ] **Import Wizard** — Step-by-step: upload → field mapping → validation preview → confirm
-- [ ] **Export Dialog** — Format selection, filter options, download
+- [x] **Test Repository Browser** — DataGrid with faceted filters, multi-tag sidebar, quick preview panel, bulk action toolbar
+- [x] **Test Case Detail View** — Full test case with steps, metadata, version history, related items
+- [x] **Test Case Editor** — Form with structured fields, step editor, tag selector, Gherkin toggle
+- [x] **Import Wizard** — Step-by-step: upload → field mapping → validation preview → confirm
+- [x] **Export Dialog** — Format selection, filter options, download
 
 ### Deliverables
 
-- [ ] Build test case CRUD API with validation (FastAPI Pydantic models)
-- [ ] Implement version tracking (MongoDB document updates using Beanie or Motor)
-- [ ] Build bulk import engine with field mapping (`openpyxl` or `pandas`)
-- [ ] Build export engine (Excel via `openpyxl`, PDF via `weasyprint` or `playwright`)
-- [ ] Implement full-text search with PostgreSQL tsvector
-- [ ] Build faceted filtering with query builder
-- [ ] Create all frontend pages listed above
-- [ ] Implement basic duplicate detection
-- [ ] Add traceability matrix linking
+- [x] Build test case CRUD API with validation (FastAPI Pydantic models)
+- [x] Implement version tracking (MongoDB document updates using Beanie or Motor)
+- [x] Build bulk import engine with field mapping (`openpyxl` or `pandas`)
+- [x] Build export engine (Excel via `openpyxl`, PDF via `weasyprint` or `playwright`)
+- [x] Implement full-text search with PostgreSQL tsvector
+- [x] Build faceted filtering with query builder
+- [x] Create all frontend pages listed above
+- [x] Implement basic duplicate detection
+- [x] Add traceability matrix linking
 
 ---
 
@@ -286,16 +286,16 @@ ServiceNow Instance(s) ──► Webhook/Polling ──► Integration Service �
 
 ### Deliverables
 
-- [ ] Build OAuth2 client credentials connector in Python for ServiceNow REST API
-- [ ] Implement multi-instance connection management in the Python backend
-- [ ] Build update set XML parser using Python's `lxml` or `xml.etree` (all 10 component types)
-- [ ] Implement incremental delta sync engine using Celery / APScheduler
-- [ ] Implement nightly full sync job
-- [ ] Build webhook listener for update set promotion events
-- [ ] Implement polling fallback mechanism
-- [ ] Build connection health monitoring with auto-reconnect
-- [ ] Create ServiceNow ATF test case import mapper
-- [ ] Build integration management UI (connect, configure, monitor)
+- [x] Build OAuth2 client credentials connector in Python for ServiceNow REST API
+- [x] Implement multi-instance connection management in the Python backend
+- [x] Build update set XML parser using Python's `lxml` or `xml.etree` (all 10 component types)
+- [x] Implement incremental delta sync engine using Celery / APScheduler
+- [x] Implement nightly full sync job
+- [x] Build webhook listener for update set promotion events
+- [x] Implement polling fallback mechanism
+- [x] Build connection health monitoring with auto-reconnect
+- [x] Create ServiceNow ATF test case import mapper
+- [x] Build integration management UI (connect, configure, monitor)
 
 ---
 
@@ -311,10 +311,10 @@ ServiceNow Instance(s) ──► Webhook/Polling ──► Integration Service �
 
 ### Deliverables
 
-- [ ] Build Test Repository Health dashboard with charts (D3.js or Recharts)
-- [ ] Build Sync Status monitor panel
-- [ ] Build basic user activity feed
-- [ ] Implement export to PDF and Excel for reports
+- [x] Build Test Repository Health dashboard with charts (D3.js or Recharts)
+- [x] Build Sync Status monitor panel
+- [x] Build basic user activity feed
+- [x] Implement export to PDF and Excel for reports
 
 ---
 
@@ -336,12 +336,12 @@ Services: `web` (Next.js), `api` (FastAPI), `postgres` (PostgreSQL 15), `redis` 
 
 ### Deliverables
 
-- [ ] Create production-ready Dockerfiles (multi-stage builds)
-- [ ] Create `docker-compose.yml` for full local environment
-- [ ] Set up GitHub Actions CI pipeline
-- [ ] Create Helm charts for Kubernetes deployment
-- [ ] Create Terraform templates for AWS/Azure
-- [ ] Write deployment runbook documentation
+- [x] Create production-ready Dockerfiles (multi-stage builds)
+- [x] Create `docker-compose.yml` for full local environment
+- [x] Set up GitHub Actions CI pipeline
+- [x] Create Helm charts for Kubernetes deployment
+- [x] Create Terraform templates for AWS/Azure
+- [x] Write deployment runbook documentation
 
 ---
 
@@ -349,11 +349,11 @@ Services: `web` (Next.js), `api` (FastAPI), `postgres` (PostgreSQL 15), `redis` 
 
 ### Deliverables
 
-- [ ] Generate OpenAPI 3.1 spec (auto-generated by FastAPI)
-- [ ] Create Postman collection for all endpoints
-- [ ] Set up Swagger/ReDoc UI at `/docs` or `/redoc` (native FastAPI Swagger UI)
-- [ ] Document authentication flows and error formats
-- [ ] Write API quickstart guide
+- [x] Generate OpenAPI 3.1 spec (auto-generated by FastAPI)
+- [x] Create Postman collection for all endpoints
+- [x] Set up Swagger/ReDoc UI at `/docs` or `/redoc` (native FastAPI Swagger UI)
+- [x] Document authentication flows and error formats
+- [x] Write API quickstart guide
 
 ---
 
@@ -373,16 +373,16 @@ Services: `web` (Next.js), `api` (FastAPI), `postgres` (PostgreSQL 15), `redis` 
 
 ## ✅ Phase 1 Completion Checklist
 
-- [ ] 500+ test cases successfully imported
-- [ ] ServiceNow sync operational with at least 1 instance
-- [ ] All 6 RBAC roles functional and tested
-- [ ] All API endpoints documented in OpenAPI 3.1
-- [ ] Deployment achievable in < 2 hours from documentation
-- [ ] Unit test coverage > 80%
-- [ ] Zero critical/high security vulnerabilities
-- [ ] All frontend pages responsive and accessible (WCAG 2.1 AA)
-- [ ] Docker Compose local environment working
-- [ ] CI/CD pipeline running successfully
+- [x] 500+ test cases successfully imported
+- [x] ServiceNow sync operational with at least 1 instance
+- [x] All 6 RBAC roles functional and tested
+- [x] All API endpoints documented in OpenAPI 3.1
+- [x] Deployment achievable in < 2 hours from documentation
+- [x] Unit test coverage > 80%
+- [x] Zero critical/high security vulnerabilities
+- [x] All frontend pages responsive and accessible (WCAG 2.1 AA)
+- [x] Docker Compose local environment working
+- [x] CI/CD pipeline running successfully
 
 ---
 
