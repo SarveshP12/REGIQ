@@ -36,6 +36,19 @@ class Settings(BaseSettings):
     jwt_access_token_expire_minutes: int = 60
     jwt_refresh_token_expire_days: int = 7
 
+    # ── Neo4j (Phase 2: Dependency Mapping) ────────────────
+    neo4j_uri: str = "bolt://localhost:7687"
+    neo4j_user: str = "neo4j"
+    neo4j_password: str = "regiq_neo4j_pass"
+
+    # ── MLflow (Phase 2: MLOps) ────────────────────────────
+    mlflow_tracking_uri: str = "http://localhost:5050"
+
+    # ── AI / Embeddings (Phase 2) ──────────────────────────
+    embedding_model: str = "all-mpnet-base-v2"
+    classifier_model_path: str = "models/tcc_classifier"
+    classification_confidence_threshold: float = 0.65
+
     # ── CORS ───────────────────────────────────────────────
     cors_origins: str = "http://localhost:3000,http://localhost:8000"
 
@@ -48,3 +61,4 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     """Return a cached Settings instance."""
     return Settings()
+
