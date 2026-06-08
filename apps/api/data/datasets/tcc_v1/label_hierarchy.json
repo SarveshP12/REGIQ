@@ -1,0 +1,228 @@
+{
+  "version": "1.0",
+  "dimensions": {
+    "business_process": [
+      "Incident Management",
+      "Problem Management",
+      "Change Management",
+      "Service Catalog",
+      "Knowledge Management",
+      "Asset Management",
+      "CMDB",
+      "HR Service Delivery",
+      "Customer Service Management",
+      "Security Operations",
+      "IT Operations Management",
+      "Other"
+    ],
+    "criticality_level": [
+      "Critical",
+      "High",
+      "Medium",
+      "Low"
+    ],
+    "test_case_type": [
+      "Functional",
+      "Regression",
+      "Integration",
+      "Performance",
+      "Security",
+      "UAT",
+      "Smoke",
+      "Exploratory"
+    ],
+    "dependency_class": [
+      "Standalone",
+      "Component",
+      "Integration",
+      "End-to-End"
+    ],
+    "automation_feasibility": [
+      "High",
+      "Medium",
+      "Low",
+      "Not Feasible"
+    ],
+    "execution_frequency": [
+      "Every Release",
+      "Weekly",
+      "Sprint",
+      "Quarterly",
+      "Annually"
+    ]
+  },
+  "business_process_tree": {
+    "Incident Management": {
+      "module": "incident",
+      "servicenow_tables": [
+        "incident",
+        "task",
+        "sysapproval_approver"
+      ],
+      "source_business_processes": [
+        "Incident Logging",
+        "Incident Resolution",
+        "Incident Hold Process",
+        "Major Incident Process",
+        "Incident Workflow",
+        "Priority Calculation",
+        "SLA Management"
+      ],
+      "source_sections": [
+        "State: New",
+        "State: Resolved",
+        "State: On Hold",
+        "State: In Progress",
+        "Parent and Child Incidents",
+        "Major Incident Management",
+        "Priority Management",
+        "Service Level Management"
+      ]
+    },
+    "Change Management": {
+      "module": "change_management",
+      "servicenow_tables": [
+        "change_request",
+        "change_task"
+      ],
+      "source_business_processes": [
+        "Change Enablement"
+      ],
+      "source_sections": [
+        "Change Management"
+      ]
+    },
+    "Problem Management": {
+      "module": "problem",
+      "servicenow_tables": [
+        "problem",
+        "known_error"
+      ],
+      "source_business_processes": [
+        "Problem Investigation"
+      ],
+      "source_sections": [
+        "Problem Management"
+      ]
+    },
+    "CMDB": {
+      "module": "cmdb",
+      "servicenow_tables": [
+        "cmdb_ci",
+        "cmdb_rel_ci",
+        "discovery_schedule"
+      ],
+      "source_business_processes": [
+        "Configuration Management"
+      ],
+      "source_sections": [
+        "CMDB"
+      ]
+    },
+    "Knowledge Management": {
+      "module": "knowledge",
+      "servicenow_tables": [
+        "kb_knowledge",
+        "kb_category"
+      ],
+      "source_business_processes": [
+        "Knowledge Integration"
+      ],
+      "source_sections": [
+        "Knowledge Management"
+      ]
+    },
+    "Customer Service Management": {
+      "module": "csm",
+      "servicenow_tables": [
+        "sn_customerservice_case",
+        "customer_contact"
+      ],
+      "source_business_processes": [
+        "Customer Support",
+        "Relationship Management"
+      ],
+      "source_sections": [
+        "Service Desk"
+      ]
+    },
+    "IT Operations Management": {
+      "module": "itom",
+      "servicenow_tables": [
+        "em_alert",
+        "em_event",
+        "sa_metric_map"
+      ],
+      "source_business_processes": [
+        "Automation",
+        "Intelligent Automation",
+        "Agent Intelligence",
+        "Platform Administration"
+      ],
+      "source_sections": [
+        "Automation",
+        "Platform Architecture"
+      ]
+    },
+    "Other": {
+      "module": "itsm_core",
+      "servicenow_tables": [
+        "sys_metadata",
+        "sys_scope"
+      ],
+      "source_business_processes": [
+        "ITSM Maturity",
+        "ITSM Roadmap",
+        "Process Governance"
+      ],
+      "source_sections": [
+        "Governance",
+        "Roadmap Planning"
+      ]
+    }
+  },
+  "mappings": {
+    "business_process_from_csv_section": {
+      "Incident Logging": "Incident Management",
+      "Incident Resolution": "Incident Management",
+      "Incident Hold Process": "Incident Management",
+      "Major Incident Process": "Incident Management",
+      "Incident Workflow": "Incident Management",
+      "Priority Calculation": "Incident Management",
+      "SLA Management": "Incident Management",
+      "Change Enablement": "Change Management",
+      "Problem Investigation": "Problem Management",
+      "Configuration Management": "CMDB",
+      "Knowledge Integration": "Knowledge Management",
+      "Customer Support": "Customer Service Management",
+      "Relationship Management": "Customer Service Management",
+      "Application Management": "Asset Management",
+      "Automation": "IT Operations Management",
+      "Intelligent Automation": "IT Operations Management",
+      "Agent Intelligence": "IT Operations Management",
+      "Platform Administration": "IT Operations Management",
+      "Process Governance": "IT Operations Management",
+      "ITSM Maturity": "Other",
+      "ITSM Roadmap": "Other"
+    },
+    "module_from_reference_section": {
+      "Change Management": "change_management",
+      "Service Desk": "service_desk",
+      "Governance": "governance",
+      "CMDB": "cmdb",
+      "Platform Architecture": "platform",
+      "Automation": "automation",
+      "State: New": "incident",
+      "Problem Management": "problem",
+      "Parent and Child Incidents": "incident",
+      "State: Resolved": "incident",
+      "State: On Hold": "incident",
+      "Major Incident Management": "incident",
+      "Priority Management": "incident",
+      "State: In Progress": "incident",
+      "Roadmap Planning": "governance",
+      "Knowledge Management": "knowledge",
+      "Service Level Management": "itsm_core"
+    }
+  }
+}

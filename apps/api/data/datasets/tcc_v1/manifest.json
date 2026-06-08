@@ -1,0 +1,60 @@
+{
+  "version": "1.0",
+  "source_csv": "D:\\PROJECT\\REGIQ\\docs\\sample_data\\Combined_500_ITSM_Test_Cases.csv",
+  "output_dir": "D:\\PROJECT\\REGIQ\\apps\\api\\data\\datasets\\tcc_v1",
+  "random_seed": 42,
+  "split_ratios": {
+    "train": 0.7,
+    "validation": 0.15,
+    "test": 0.15
+  },
+  "counts": {
+    "unique_test_cases": 500,
+    "step_examples": 2535,
+    "total_labeled_examples": 3035,
+    "train": 2101,
+    "validation": 427,
+    "test": 507
+  },
+  "meets_minimum_2000": true,
+  "label_distribution": {
+    "business_process": {
+      "CMDB": 46,
+      "IT Operations Management": 109,
+      "Incident Management": 132,
+      "Other": 40,
+      "Customer Service Management": 50,
+      "Change Management": 52,
+      "Problem Management": 32,
+      "Asset Management": 25,
+      "Knowledge Management": 14
+    },
+    "criticality_level": {
+      "Medium": 481,
+      "Critical": 19
+    },
+    "test_case_type": {
+      "Functional": 500
+    },
+    "dependency_class": {
+      "Standalone": 383,
+      "Component": 117
+    },
+    "automation_feasibility": {
+      "Medium": 479,
+      "High": 21
+    },
+    "execution_frequency": {
+      "Every Release": 500
+    }
+  },
+  "files": {
+    "labeled_all": "labeled_all.jsonl",
+    "train": "train.jsonl",
+    "validation": "validation.jsonl",
+    "test": "test.jsonl",
+    "label_hierarchy": "label_hierarchy.json",
+    "label_mapping": "label_mapping.json",
+    "itsm_vocabulary": "itsm_vocabulary.json"
+  }
+}
