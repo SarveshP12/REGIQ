@@ -22,6 +22,7 @@ class TestCaseCreate(BaseModel):
     type_tags: Optional[list[str]] = []
     automation_flag: str = "manual"
     business_process_id: Optional[UUID] = None
+    traceability: Optional[dict[str, Any]] = {}
 
 
 class TestCaseUpdate(BaseModel):
@@ -36,6 +37,7 @@ class TestCaseUpdate(BaseModel):
     type_tags: Optional[list[str]] = None
     automation_flag: Optional[str] = None
     business_process_id: Optional[UUID] = None
+    traceability: Optional[dict[str, Any]] = None
 
 
 # ── Response ──────────────────────────────────────────────
@@ -56,6 +58,7 @@ class TestCaseResponse(BaseModel):
     business_process_id: Optional[UUID] = None
     tenant_id: UUID
     created_by: Optional[UUID] = None
+    traceability: Optional[dict[str, Any]] = {}
     version: int
     created_at: datetime
     updated_at: datetime
@@ -99,3 +102,8 @@ class TestCaseVersionResponse(BaseModel):
     changed_by: Optional[UUID] = None
     timestamp: datetime
     snapshot: dict[str, Any]
+
+
+class DuplicateCheckRequest(BaseModel):
+    title: str
+    description: Optional[str] = None

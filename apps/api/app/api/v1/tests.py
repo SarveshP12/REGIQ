@@ -24,6 +24,7 @@ from app.schemas.test_case import (
     TestCaseResponse,
     TestCaseUpdate,
     TestCaseVersionResponse,
+    DuplicateCheckRequest,
 )
 
 router = APIRouter()
@@ -104,9 +105,72 @@ async def create_test(
         tenant_id=current_user.tenant_id,
         created_by=current_user.id,
     )
+    
+    # Run auto-classification
+    try:
+        from app.core.ai.classifier import classify_test_case
+        steps_text = _steps_to_text(tc.steps)
+        cls_res = classify_test_case(
+            title=tc.title or "",
+            description=tc.description or "",
+            steps=steps_text,
+        )
+        tc.ai_business_process = cls_res.business_process
+        tc.ai_test_case_type = cls_res.test_case_type
+        tc.ai_dependency_class = cls_res.dependency_class
+        tc.ai_automation_feasibility = cls_res.automation_feasibility
+        tc.ai_execution_frequency = cls_res.execution_frequency
+        tc.ai_confidence_scores = cls_res.confidence_scores
+        tc.ai_needs_review = cls_res.needs_review
+        tc.ai_model_version = cls_res.model_version
+        tc.ai_classified_at = datetime.now(timezone.utc)
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning("Auto-classification failed for new test case: %s", e)
+
+    # Run criticality scoring
+    try:
+        from app.core.ai.criticality import calculate_criticality
+        steps_text = _steps_to_text(tc.steps)
+        crit_res = calculate_criticality(
+            title=tc.title or "",
+            description=tc.description or "",
+            steps=steps_text,
+        )
+        tc.criticality_score = crit_res["score"]
+        tc.ai_criticality_level = crit_res["category"]
+        tc.criticality = crit_res["category"]
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning("Criticality scoring failed for new test case: %s", e)
+
+    # Generate pgvector embedding
+    try:
+        from app.core.ai.embedding import embedding_service
+        tc.embedding = embedding_service.generate_embedding(tc.title + " " + (tc.description or ""))
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning("Embedding generation failed for new test case: %s", e)
+
     db.add(tc)
     await db.flush()
     await db.refresh(tc)
+
+    # Link test case in Neo4j
+    try:
+        from app.services.graph_builder import GraphBuilderService
+        steps_text = _steps_to_text(tc.steps)
+        builder = GraphBuilderService()
+        builder.link_test_case(
+            tc_id=str(tc.id),
+            title=tc.title or "",
+            description=tc.description or "",
+            steps_text=steps_text,
+            tags=tc.type_tags or []
+        )
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning("Neo4j linking failed for new test case: %s", e)
 
     # Save initial version snapshot to MongoDB
     mongo = get_mongo_db()
@@ -161,6 +225,69 @@ async def update_test(
 
     for field, value in update_data.items():
         setattr(tc, field, value)
+
+    # Run AI services if key text fields are updated
+    if any(f in changed_fields for f in ["title", "description", "steps", "preconditions", "expected_results"]):
+        steps_text = _steps_to_text(tc.steps)
+        
+        # Run classification
+        try:
+            from app.core.ai.classifier import classify_test_case
+            cls_res = classify_test_case(
+                title=tc.title or "",
+                description=tc.description or "",
+                steps=steps_text,
+            )
+            tc.ai_business_process = cls_res.business_process
+            tc.ai_test_case_type = cls_res.test_case_type
+            tc.ai_dependency_class = cls_res.dependency_class
+            tc.ai_automation_feasibility = cls_res.automation_feasibility
+            tc.ai_execution_frequency = cls_res.execution_frequency
+            tc.ai_confidence_scores = cls_res.confidence_scores
+            tc.ai_needs_review = cls_res.needs_review
+            tc.ai_model_version = cls_res.model_version
+            tc.ai_classified_at = datetime.now(timezone.utc)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning("Auto-classification failed for updated test case: %s", e)
+
+        # Run criticality
+        try:
+            from app.core.ai.criticality import calculate_criticality
+            crit_res = calculate_criticality(
+                title=tc.title or "",
+                description=tc.description or "",
+                steps=steps_text,
+            )
+            tc.criticality_score = crit_res["score"]
+            tc.ai_criticality_level = crit_res["category"]
+            tc.criticality = crit_res["category"]
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning("Criticality scoring failed for updated test case: %s", e)
+
+        # Generate embedding
+        try:
+            from app.core.ai.embedding import embedding_service
+            tc.embedding = embedding_service.generate_embedding(tc.title + " " + (tc.description or ""))
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning("Embedding generation failed for updated test case: %s", e)
+
+        # Link/Update test case in Neo4j
+        try:
+            from app.services.graph_builder import GraphBuilderService
+            builder = GraphBuilderService()
+            builder.link_test_case(
+                tc_id=str(tc.id),
+                title=tc.title or "",
+                description=tc.description or "",
+                steps_text=steps_text,
+                tags=tc.type_tags or []
+            )
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning("Neo4j linking failed for updated test case: %s", e)
 
     tc.version += 1
     tc.updated_at = datetime.now(timezone.utc)
@@ -354,8 +481,70 @@ async def import_tests(
             except (json.JSONDecodeError, TypeError):
                 tc.steps = [{"step": 1, "action": steps_raw}]
 
+        # Run auto-classification
+        try:
+            from app.core.ai.classifier import classify_test_case
+            steps_text = _steps_to_text(tc.steps)
+            cls_res = classify_test_case(
+                title=tc.title or "",
+                description=tc.description or "",
+                steps=steps_text,
+            )
+            tc.ai_business_process = cls_res.business_process
+            tc.ai_test_case_type = cls_res.test_case_type
+            tc.ai_dependency_class = cls_res.dependency_class
+            tc.ai_automation_feasibility = cls_res.automation_feasibility
+            tc.ai_execution_frequency = cls_res.execution_frequency
+            tc.ai_confidence_scores = cls_res.confidence_scores
+            tc.ai_needs_review = cls_res.needs_review
+            tc.ai_model_version = cls_res.model_version
+            tc.ai_classified_at = datetime.now(timezone.utc)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning("Auto-classification failed on import: %s", e)
+
+        # Run criticality scoring
+        try:
+            from app.core.ai.criticality import calculate_criticality
+            steps_text = _steps_to_text(tc.steps)
+            crit_res = calculate_criticality(
+                title=tc.title or "",
+                description=tc.description or "",
+                steps=steps_text,
+            )
+            tc.criticality_score = crit_res["score"]
+            tc.ai_criticality_level = crit_res["category"]
+            tc.criticality = crit_res["category"]
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning("Criticality scoring failed on import: %s", e)
+
+        # Generate pgvector embedding
+        try:
+            from app.core.ai.embedding import embedding_service
+            tc.embedding = embedding_service.generate_embedding(tc.title + " " + (tc.description or ""))
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning("Embedding generation failed on import: %s", e)
+
         db.add(tc)
         await db.flush()
+
+        # Link imported test case in Neo4j
+        try:
+            from app.services.graph_builder import GraphBuilderService
+            steps_text = _steps_to_text(tc.steps)
+            builder = GraphBuilderService()
+            builder.link_test_case(
+                tc_id=str(tc.id),
+                title=tc.title or "",
+                description=tc.description or "",
+                steps_text=steps_text,
+                tags=tc.type_tags or []
+            )
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning("Neo4j linking failed on import: %s", e)
 
         # Save initial version to MongoDB
         await mongo.test_case_versions.insert_one({
@@ -449,3 +638,125 @@ async def _get_test_or_404(db: AsyncSession, test_id: uuid.UUID, tenant_id: uuid
     if tc is None:
         raise HTTPException(status_code=404, detail="Test case not found")
     return tc
+
+
+def _steps_to_text(steps) -> str:
+    if not steps:
+        return ""
+    if isinstance(steps, list):
+        return " ".join(str(s) for s in steps)
+    return str(steps)
+
+
+# ── Similarity and Duplicate Detection ──────────────────────
+
+
+@router.get("/similar/{test_id}", response_model=list[TestCaseResponse], dependencies=[Depends(require_permissions("tests:read"))])
+@router.get("/{test_id}/similar", response_model=list[TestCaseResponse], dependencies=[Depends(require_permissions("tests:read"))])
+async def get_similar_tests(
+    test_id: uuid.UUID,
+    limit: int = Query(5, ge=1, le=20),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Find similar test cases using cosine similarity on pgvector embeddings."""
+    tc = await _get_test_or_404(db, test_id, current_user.tenant_id)
+    if not tc.embedding:
+        return []
+
+    try:
+        # Cosine distance operator is <=> in SQL
+        distance_expr = TestCase.embedding.cosine_distance(tc.embedding)
+        stmt = (
+            select(TestCase)
+            .where(
+                TestCase.tenant_id == current_user.tenant_id,
+                TestCase.id != test_id,
+                TestCase.embedding.isnot(None),
+                TestCase.archived_at.is_(None)
+            )
+            .order_by(distance_expr)
+            .limit(limit)
+        )
+        result = await db.execute(stmt)
+        similar_cases = result.scalars().all()
+        return [TestCaseResponse.model_validate(sc) for sc in similar_cases]
+    except Exception as e:
+        # Fallback in case of database or pgvector issues
+        import logging
+        logging.getLogger(__name__).warning("Similarity query failed, fallback to title search: %s", e)
+        stmt = (
+            select(TestCase)
+            .where(
+                TestCase.tenant_id == current_user.tenant_id,
+                TestCase.id != test_id,
+                TestCase.title.ilike(f"%{tc.title}%"),
+                TestCase.archived_at.is_(None)
+            )
+            .limit(limit)
+        )
+        result = await db.execute(stmt)
+        return [TestCaseResponse.model_validate(sc) for sc in result.scalars().all()]
+
+
+@router.post("/duplicates", dependencies=[Depends(require_permissions("tests:read"))])
+async def check_duplicates(
+    body: DuplicateCheckRequest,
+    limit: int = Query(5, ge=1, le=20),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Detect potential duplicate test cases using embedding similarity threshold (>= 0.85)."""
+    from app.core.ai.embedding import embedding_service
+    
+    text_repr = body.title
+    if body.description:
+        text_repr += f" {body.description}"
+        
+    embedding = embedding_service.generate_embedding(text_repr)
+    
+    try:
+        distance_expr = TestCase.embedding.cosine_distance(embedding)
+        stmt = (
+            select(TestCase, (1.0 - distance_expr).label("similarity"))
+            .where(
+                TestCase.tenant_id == current_user.tenant_id,
+                TestCase.embedding.isnot(None),
+                TestCase.archived_at.is_(None)
+            )
+            .order_by(distance_expr)
+            .limit(limit)
+        )
+        result = await db.execute(stmt)
+        rows = result.all()
+        
+        duplicates = []
+        for tc, similarity in rows:
+            if similarity >= 0.85:
+                duplicates.append({
+                    "test_case": TestCaseResponse.model_validate(tc),
+                    "similarity_score": round(float(similarity), 4)
+                })
+        return {"duplicates": duplicates}
+    except Exception as e:
+        # Fallback on DB error
+        import logging
+        logging.getLogger(__name__).warning("Duplicate detection query failed: %s", e)
+        # Simply return exact/fuzzy title match
+        stmt = (
+            select(TestCase)
+            .where(
+                TestCase.tenant_id == current_user.tenant_id,
+                TestCase.title.ilike(f"%{body.title}%"),
+                TestCase.archived_at.is_(None)
+            )
+            .limit(limit)
+        )
+        result = await db.execute(stmt)
+        cases = result.scalars().all()
+        return {
+            "duplicates": [
+                {"test_case": TestCaseResponse.model_validate(c), "similarity_score": 0.9}
+                for c in cases
+            ]
+        }

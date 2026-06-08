@@ -1,8 +1,11 @@
 """REGIQ API — FastAPI application entry point."""
 
+import logging
 from contextlib import asynccontextmanager
 
 import redis.asyncio as redis
+
+logger = logging.getLogger(__name__)
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -78,6 +81,9 @@ from app.api.v1.tests import router as tests_router
 from app.api.v1.integrations import router as integrations_router
 from app.api.v1.changes import router as changes_router
 from app.api.v1.dashboard import router as dashboard_router
+from app.api.v1.criticality import router as criticality_router
+from app.api.v1.dependencies import router as dependencies_router
+from app.api.v1.defects import router as defects_router
 
 app.include_router(auth_router, prefix="/api/v1/auth", tags=["Auth"])
 app.include_router(users_router, prefix="/api/v1/users", tags=["Users"])
@@ -87,3 +93,14 @@ app.include_router(tests_router, prefix="/api/v1/tests", tags=["Test Repository"
 app.include_router(integrations_router, prefix="/api/v1/integrations", tags=["Integrations"])
 app.include_router(changes_router, prefix="/api/v1/changes", tags=["Change Management"])
 app.include_router(dashboard_router, prefix="/api/v1/dashboard", tags=["Dashboard"])
+app.include_router(criticality_router, prefix="/api/v1/criticality", tags=["Criticality Scoring"])
+app.include_router(dependencies_router, prefix="/api/v1/dependencies", tags=["Dependencies Graph"])
+app.include_router(defects_router, prefix="/api/v1/defects", tags=["Defects"])
+
+try:
+    from app.api.v1.classification import router as classification_router
+
+    app.include_router(classification_router, prefix="/api/v1/ai", tags=["AI Classification"])
+except ImportError as exc:
+    logger.warning("AI classification routes disabled (missing optional ML deps): %s", exc)
+
